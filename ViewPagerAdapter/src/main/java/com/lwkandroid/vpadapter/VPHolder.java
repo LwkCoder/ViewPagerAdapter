@@ -1,0 +1,258 @@
+package com.lwkandroid.vpadapter;
+
+import android.content.Context;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.text.util.Linkify;
+import android.util.SparseArray;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Checkable;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
+
+/**
+ * Description:ItemView的Holder
+ *
+ * @author LWK
+ * @date 2019/5/5
+ */
+public final class VPHolder
+{
+    private Context mContext;
+    private View mContentView;
+    private SparseArray<View> mViews;
+
+    private VPHolder(Context context, View itemView)
+    {
+        this.mContext = context;
+        this.mContentView = itemView;
+    }
+
+    public static VPHolder get(Context context, View itemView)
+    {
+        return new VPHolder(context, itemView);
+    }
+
+    public static VPHolder get(Context context, ViewGroup parent, int layoutId)
+    {
+        return new VPHolder(context, LayoutInflater.from(context).inflate(layoutId, parent, false));
+    }
+
+    public Context getContext()
+    {
+        return mContext;
+    }
+
+    public View getContentView()
+    {
+        return mContentView;
+    }
+
+    /**
+     * 通过viewId获取控件
+     *
+     * @param viewId
+     * @return
+     */
+    public <T extends View> T findView(int viewId)
+    {
+        if (mViews == null)
+        {
+            mViews = new SparseArray<>();
+        }
+
+        View view = mViews.get(viewId);
+        if (view == null)
+        {
+            view = mContentView.findViewById(viewId);
+            mViews.put(viewId, view);
+        }
+        return (T) view;
+    }
+
+    /**
+     * 设置View是否可见
+     */
+    public VPHolder setVisibility(int viewId, int visibility)
+    {
+        View view = findView(viewId);
+        if (view != null)
+        {
+            view.setVisibility(visibility);
+        }
+        return this;
+    }
+
+    /**
+     * 为TextView设置字符串
+     */
+    public VPHolder setTvText(int viewId, CharSequence text)
+    {
+        TextView tv = findView(viewId);
+        if (tv != null)
+        {
+            tv.setText(text);
+        }
+        return this;
+    }
+
+    /**
+     * 为TextView设置字符串
+     */
+    public VPHolder setTvText(int viewId, @StringRes int resId)
+    {
+        TextView tv = findView(viewId);
+        if (tv != null)
+        {
+            tv.setText(resId);
+        }
+        return this;
+    }
+
+    /**
+     * 设置textview颜色
+     */
+    public VPHolder setTvColor(int viewId, @ColorInt int textColor)
+    {
+        TextView tv = findView(viewId);
+        if (tv != null)
+        {
+            tv.setTextColor(textColor);
+        }
+        return this;
+    }
+
+    /**
+     * 设置textview颜色【资源id】
+     */
+    public VPHolder setTvColorRes(int viewId, @ColorRes int textColorRes)
+    {
+        TextView tv = findView(viewId);
+        if (tv != null)
+        {
+            tv.setTextColor(mContext.getResources().getColor(textColorRes));
+        }
+        return this;
+    }
+
+    /**
+     * 设置textview支持超链接
+     */
+    public VPHolder setTvLinkify(int viewId)
+    {
+        TextView tv = findView(viewId);
+        if (tv != null)
+        {
+            Linkify.addLinks(tv, Linkify.ALL);
+        }
+        return this;
+    }
+
+    /**
+     * 设置textview的Typeface
+     */
+    public VPHolder setTvTypeface(Typeface typeface, int... viewIds)
+    {
+        for (int viewId : viewIds)
+        {
+            TextView tv = findView(viewId);
+            if (tv != null)
+            {
+                tv.setTypeface(typeface);
+                tv.setPaintFlags(tv.getPaintFlags() | Paint.SUBPIXEL_TEXT_FLAG);
+            }
+        }
+        return this;
+    }
+
+    /**
+     * 设置button的文本
+     */
+    public VPHolder setBtnText(int viewId, CharSequence text)
+    {
+        Button button = findView(viewId);
+        if (button != null)
+        {
+            button.setText(text);
+        }
+        return this;
+    }
+
+    /**
+     * 设置button的文本【资源id】
+     */
+    public VPHolder setBtnText(int viewId, @StringRes int resId)
+    {
+        Button button = findView(viewId);
+        if (button != null)
+        {
+            button.setText(resId);
+        }
+        return this;
+    }
+
+    /**
+     * 为ImageView设置本地资源图片
+     */
+    public VPHolder setImgResource(int viewId, @DrawableRes int resId)
+    {
+        ImageView img = findView(viewId);
+        if (img != null)
+        {
+            img.setImageResource(resId);
+        }
+        return this;
+    }
+
+    /**
+     * 为View设置点击事件
+     */
+    public VPHolder setClickListener(int viewId, View.OnClickListener l)
+    {
+        View view = findView(viewId);
+        if (view != null)
+        {
+            view.setOnClickListener(l);
+        }
+        return this;
+    }
+
+    /**
+     * 设置View背景色
+     */
+    public VPHolder setBackgroundColor(int viewId, @ColorInt int color)
+    {
+        View view = findView(viewId);
+        view.setBackgroundColor(color);
+        return this;
+    }
+
+    /**
+     * 设置View的背景【资源id】
+     */
+    public VPHolder setBackgroundRes(int viewId, @DrawableRes int bgResId)
+    {
+        View view = findView(viewId);
+        view.setBackgroundResource(bgResId);
+        return this;
+    }
+
+    /**
+     * 设置View是否可选
+     */
+    public VPHolder setChecked(int viewId, boolean checked)
+    {
+        Checkable view = (Checkable) findView(viewId);
+        view.setChecked(checked);
+        return this;
+    }
+
+}
