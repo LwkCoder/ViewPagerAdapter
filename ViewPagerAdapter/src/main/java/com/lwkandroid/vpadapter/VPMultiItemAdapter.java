@@ -1,6 +1,7 @@
 package com.lwkandroid.vpadapter;
 
 import android.content.Context;
+import android.os.Parcelable;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,12 +25,25 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     private Context mContext;
     private List<T> mDataList = new LinkedList<>();
     private VPItemViewManager<T> mItemViewManager = new VPItemViewManager<>();
-    private SparseArray<LinkedList<VPHolder>> mHolderArray = new SparseArray<>();
     private SparseArray<VPHolder> mHolderCacheArray = new SparseArray<>();
+    private final SparseArray<View> mAttachedViewsArray;
+    private SparseArray<SparseArray<Parcelable>> mDetachedStatesArray;
     //存储点击事件的map
     protected HashMap<Integer, OnChildClickListener<T>> mChildListenerMap;
 
     public VPMultiItemAdapter(Context context, List<T> dataList)
+    {
+        this(context, dataList, 3);
+    }
+
+    /**
+     * 构造方法
+     *
+     * @param context  context
+     * @param dataList 数据集合
+     * @param capacity 保存View状态的初始容量
+     */
+    public VPMultiItemAdapter(Context context, List<T> dataList, int capacity)
     {
         this.mContext = context;
         if (dataList != null)
@@ -44,6 +58,8 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
                 addItemView(itemView);
             }
         }
+        mAttachedViewsArray = new SparseArray<>(capacity);
+        mDetachedStatesArray = new SparseArray<>();
     }
 
     @Override
@@ -65,7 +81,7 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     {
         T data = getItemData(position);
         int viewType = mItemViewManager.getItemViewType(data, position);
-        VPHolder holder = getCachedHolder(viewType);
+        VPHolder holder = mHolderCacheArray.get(position);
         if (holder == null)
         {
             holder = mItemViewManager.onCreateViewHolder(viewType, container);
@@ -74,7 +90,13 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         {
             throw new IllegalArgumentException("No VPHolder matched for ViewType=" + viewType + " in data source");
         }
-        container.addView(holder.getContentView());
+        //恢复状态
+        SparseArray<Parcelable> viewState = mDetachedStatesArray.get(position);
+        if (viewState != null)
+        {
+            holder.getContentView().restoreHierarchyState(viewState);
+        }
+
         mItemViewManager.bindView(holder, data, position);
         //回调子View点击监听
         if (mChildListenerMap != null)
@@ -97,6 +119,9 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
                 });
             }
         }
+
+        container.addView(holder.getContentView());
+        mAttachedViewsArray.put(position, holder.getContentView());
         return holder;
     }
 
@@ -106,13 +131,36 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         VPHolder holder = (VPHolder) object;
         if (holder.getContentView() != null)
         {
+            putInDetached(position, holder.getContentView());
             container.removeView(holder.getContentView());
+            mAttachedViewsArray.remove(position);
+            mHolderCacheArray.put(position, holder);
         }
-        cacheHolder(mItemViewManager.getItemViewType(getItemData(position), position), holder);
+    }
+
+    @Override
+    public final VPSaveState saveState()
+    {
+        for (int i = 0, size = mAttachedViewsArray.size(); i < size; i++)
+        {
+            int position = mAttachedViewsArray.keyAt(i);
+            View view = mAttachedViewsArray.valueAt(i);
+            putInDetached(position, view);
+        }
+        return new VPSaveState(mDetachedStatesArray);
+    }
+
+    @Override
+    public final void restoreState(Parcelable state, ClassLoader loader)
+    {
+        VPSaveState savedState = (VPSaveState) state;
+        mDetachedStatesArray = savedState.mDetachedStatesArray;
     }
 
     /**
      * 获取某位置上的数据
+     *
+     * @param position 位置
      */
     public T getItemData(int position)
     {
@@ -120,7 +168,9 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     }
 
     /**
-     * 添加子布局类型
+     * 添加ItemView类型
+     *
+     * @param itemView ItemView
      */
     public void addItemView(VPBaseItemView<T> itemView)
     {
@@ -128,13 +178,20 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     }
 
     /**
-     * 添加子布局类型
+     * 添加ItemView类型
+     *
+     * @param viewType ItemView类型
+     * @param itemView ItemView
      */
     public void addItemView(int viewType, VPBaseItemView<T> itemView)
     {
         mItemViewManager.addItemView(viewType, itemView);
     }
 
+    /***
+     * 刷新数据的方法
+     * @param dataList 数据集合
+     */
     public void refreshData(List<T> dataList)
     {
         mDataList.clear();
@@ -142,18 +199,34 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         notifyDataSetChanged();
     }
 
+    /**
+     * 添加数据
+     *
+     * @param data 数据对象
+     */
     public void addData(T data)
     {
         mDataList.add(data);
         notifyDataSetChanged();
     }
 
+    /**
+     * 添加数据
+     *
+     * @param index 添加的位置
+     * @param data  数据对象
+     */
     public void addData(int index, T data)
     {
         mDataList.add(index, data);
         notifyDataSetChanged();
     }
 
+    /**
+     * 删除数据
+     *
+     * @param index 删除的位置
+     */
     public void removeData(int index)
     {
         if (index >= 0 && index < getCount())
@@ -163,52 +236,32 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         }
     }
 
+    /**
+     * 删除数据
+     *
+     * @param data 删除的数据对象
+     */
     public void removeData(T data)
     {
         mDataList.remove(data);
         notifyDataSetChanged();
     }
 
+    /**
+     * 获取关联的Context
+     *
+     * @return Context
+     */
     public Context getContext()
     {
         return mContext;
     }
 
-    private VPHolder getCachedHolder(int viewType)
-    {
-        LinkedList<VPHolder> cache = mHolderArray.get(viewType);
-        if (cache != null && !cache.isEmpty())
-        {
-            return cache.pop();
-        }
-        return null;
-    }
-
-    //    private VPHolder getCachedHolder(int viewType)
-    //    {
-    //        return mHolderCacheArray.get(viewType);
-    //    }
-
-    //    private void cacheHolder(int viewType, VPHolder holder)
-    //    {
-    //        mHolderCacheArray.put(viewType, holder);
-    //    }
-
-    private void cacheHolder(int viewType, VPHolder holder)
-    {
-        LinkedList<VPHolder> cacheList = mHolderArray.get(viewType);
-        if (cacheList == null)
-        {
-            cacheList = new LinkedList<VPHolder>();
-            mHolderArray.put(viewType, cacheList);
-        }
-        cacheList.add(holder);
-    }
-
-    public abstract VPBaseItemView<T>[] createAllItemViews();
-
     /**
      * 添加子View点击事件
+     *
+     * @param viewId   view的id
+     * @param listener 点击监听
      */
     public void setOnChildClickListener(int viewId, OnChildClickListener<T> listener)
     {
@@ -218,6 +271,20 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         }
         mChildListenerMap.put(viewId, listener);
     }
+
+    private void putInDetached(int position, View view)
+    {
+        SparseArray<Parcelable> viewState = new SparseArray<>();
+        view.saveHierarchyState(viewState);
+        mDetachedStatesArray.put(position, viewState);
+    }
+
+    /**
+     * 子类实现，指定关联的ItemView集合
+     *
+     * @return ItemView集合
+     */
+    public abstract VPBaseItemView<T>[] createAllItemViews();
 
     /**
      * 子View点击事件

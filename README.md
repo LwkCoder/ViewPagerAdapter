@@ -2,7 +2,7 @@
 ViewPager通用适配器
 </br>
 
-该适配器简化了使用ViewPager时创建适配器的工作，支持子Item布局不一样的情况，且内部实现了Holder复用
+该适配器简化了使用ViewPager时创建适配器的工作，支持子Item布局不一样的情况，且内部实现了Holder复用和状态缓存恢复功能。
 
 ### 引用方式
 最新版本请查看[这里](https://github.com/Vanish136/ViewPagerAdapter/releases)，替换掉下方的`last-version`
@@ -134,4 +134,8 @@ public class TestMultiAdapter extends VPMultiItemAdapter<TestData>
 
 ### Proguard混淆
 无须特别混淆规则
+</br>
+
+### 感谢
+ 状态缓存恢复参考的该项目：[ViewStatePagerAdapter](https://github.com/NightlyNexus/ViewStatePagerAdapter)
 
