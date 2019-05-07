@@ -89,7 +89,7 @@ final class VPItemViewManager<T>
      * @param parent   父布局
      * @return VPHolder
      */
-    VPHolder onCreateViewHolder(int viewType, ViewGroup parent)
+    VPHolder createViewHolder(int viewType, ViewGroup parent)
     {
         VPBaseItemView<T> itemView = mAllItemViews.get(viewType);
         return itemView != null ? itemView.onCreateViewHolder(parent) : null;

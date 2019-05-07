@@ -80,16 +80,20 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     public Object instantiateItem(@NonNull ViewGroup container, final int position)
     {
         T data = getItemData(position);
-        int viewType = mItemViewManager.getItemViewType(data, position);
         VPHolder holder = mHolderCacheArray.get(position);
         if (holder == null)
         {
-            holder = mItemViewManager.onCreateViewHolder(viewType, container);
+            int viewType = mItemViewManager.getItemViewType(data, position);
+            holder = mItemViewManager.createViewHolder(viewType, container);
+            if (holder == null)
+            {
+                throw new IllegalArgumentException("No VPHolder matched for ViewType=" + viewType + " in data source");
+            } else
+            {
+                mHolderCacheArray.put(position, holder);
+            }
         }
-        if (holder == null)
-        {
-            throw new IllegalArgumentException("No VPHolder matched for ViewType=" + viewType + " in data source");
-        }
+
         //恢复状态
         SparseArray<Parcelable> viewState = mDetachedStatesArray.get(position);
         if (viewState != null)
@@ -134,7 +138,6 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
             putInDetached(position, holder.getContentView());
             container.removeView(holder.getContentView());
             mAttachedViewsArray.remove(position);
-            mHolderCacheArray.put(position, holder);
         }
     }
 
@@ -165,6 +168,17 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     public T getItemData(int position)
     {
         return position < getCount() ? mDataList.get(position) : null;
+    }
+
+    /**
+     * 获取某位置上的Holder
+     *
+     * @param position 位置
+     * @return VPHolder
+     */
+    public VPHolder getItemHolder(int position)
+    {
+        return position < getCount() ? mHolderCacheArray.get(position) : null;
     }
 
     /**
