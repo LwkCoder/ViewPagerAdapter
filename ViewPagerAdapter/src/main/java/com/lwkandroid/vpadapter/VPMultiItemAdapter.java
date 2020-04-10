@@ -6,10 +6,8 @@ import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
@@ -29,7 +27,7 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
     private final SparseArray<View> mAttachedViewsArray;
     private SparseArray<SparseArray<Parcelable>> mDetachedStatesArray;
     //存储点击事件的map
-    protected HashMap<Integer, OnChildClickListener<T>> mChildListenerMap;
+    private SparseArray<OnChildClickListener<T>> mChildClickListenerArray;
 
     public VPMultiItemAdapter(Context context, List<T> dataList)
     {
@@ -102,23 +100,20 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
         }
 
         mItemViewManager.bindView(holder, data, position);
+
         //回调子View点击监听
-        if (mChildListenerMap != null)
+        if (mChildClickListenerArray != null)
         {
-            for (Map.Entry<Integer, OnChildClickListener<T>> entry : mChildListenerMap.entrySet())
+            for (int i = 0, size = mChildClickListenerArray.size(); i < size; i++)
             {
-                final int viewId = entry.getKey();
+                final int index = i;
+                final int viewId = mChildClickListenerArray.keyAt(index);
                 final T t = data;
-                holder.setClickListener(viewId, new View.OnClickListener()
-                {
-                    @Override
-                    public void onClick(View v)
+                holder.setClickListener(viewId, v -> {
+                    OnChildClickListener<T> listener = mChildClickListenerArray.valueAt(index);
+                    if (listener != null)
                     {
-                        OnChildClickListener<T> listener = mChildListenerMap.get(viewId);
-                        if (listener != null)
-                        {
-                            listener.onChildClicked(viewId, v, t, position);
-                        }
+                        listener.onChildClicked(viewId, v, t, position);
                     }
                 });
             }
@@ -279,11 +274,11 @@ public abstract class VPMultiItemAdapter<T> extends PagerAdapter
      */
     public void setOnChildClickListener(int viewId, OnChildClickListener<T> listener)
     {
-        if (mChildListenerMap == null)
+        if (mChildClickListenerArray == null)
         {
-            mChildListenerMap = new HashMap<>();
+            mChildClickListenerArray = new SparseArray<>();
         }
-        mChildListenerMap.put(viewId, listener);
+        mChildClickListenerArray.put(viewId, listener);
     }
 
     private void putInDetached(int position, View view)

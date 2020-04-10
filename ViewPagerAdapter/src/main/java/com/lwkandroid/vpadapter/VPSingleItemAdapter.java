@@ -46,6 +46,7 @@ public abstract class VPSingleItemAdapter<T> extends VPMultiItemAdapter<T>
                 VPSingleItemAdapter.this.onBindView(holder, t, position);
             }
         };
+        mSingleItemView.setAdapter(this);
         return new VPBaseItemView[]{mSingleItemView};
     }
 
