@@ -132,6 +132,32 @@ public class TestMultiAdapter extends VPMultiItemAdapter<TestData>
 ```
 </br>
 
+### VPFragmentPagerAdapter/VPFragmentStatePagerAdapter
+这两个适配器其实是对FragmentPagerAdapter/FragmentStatePagerAdapter的优化，是从鴻洋的一篇推文中学习到的，相关连接请[点我](https://mp.weixin.qq.com/s/MOWdbI5IREjQP1Px-WJY1Q)，以FragmentStatePagerAdapter示例如下：
+```
+public class TestStatePagerAdapter extends VPFragmentStatePagerAdapter
+{
+    public TestStatePagerAdapter(FragmentManager fm)
+    {
+        super(fm);
+    }
+
+    @Override
+    public Fragment createFragment(int position)
+    {
+        //这里需要根据位置来初始化Fragment
+        return TestFragment.createInstance(position);
+    }
+
+    @Override
+    public int getCount()
+    {
+        //这里需要指定Pager的数量
+        return 500;
+    }
+}
+```
+
 ### Proguard混淆
 无须特别混淆规则
 </br>

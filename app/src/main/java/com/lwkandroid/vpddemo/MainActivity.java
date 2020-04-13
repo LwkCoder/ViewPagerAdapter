@@ -24,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mViewPager = findViewById(R.id.vp_main);
         findViewById(R.id.btn_main01).setOnClickListener(this);
         findViewById(R.id.btn_main02).setOnClickListener(this);
+        findViewById(R.id.btn_main03).setOnClickListener(this);
+        findViewById(R.id.btn_main04).setOnClickListener(this);
     }
 
     @Override
@@ -53,6 +55,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 multiList.add(new TestData("SIX", 1));
                 mMultiAdapter = new TestMultiAdapter(this, multiList);
                 mViewPager.setAdapter(mMultiAdapter);
+                break;
+            case R.id.btn_main03:
+                TestPagerAdapter pagerAdapter = new TestPagerAdapter(getSupportFragmentManager());
+                mViewPager.setAdapter(pagerAdapter);
+                break;
+            case R.id.btn_main04:
+                TestStatePagerAdapter statePagerAdapter = new TestStatePagerAdapter(getSupportFragmentManager());
+                mViewPager.setAdapter(statePagerAdapter);
                 break;
             default:
                 break;
