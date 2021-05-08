@@ -8,7 +8,8 @@ ViewPager通用适配器
 最新版本请查看[这里](https://github.com/Vanish136/ViewPagerAdapter/releases)，替换掉下方的`last-version`
 ```
 dependencies {
-   implementation 'com.lwkandroid:ViewPagerAdapter:last-version'
+   #迁移到MavenCentral后引用方式如下：
+   implementation 'com.lwkandroid.library:ViewPagerAdapter:last-version'
 }
 ```
 </br>
