@@ -1,4 +1,6 @@
 # ViewPagerAdapter
+【不再维护，如有bug、需求，请自行clone源码修改】
+
 ViewPager通用适配器
 </br>
 
